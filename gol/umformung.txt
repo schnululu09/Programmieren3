@@ -1,0 +1,292 @@
+Klar! Um deinen Code so umzugestalten, dass alles, was nicht im Haupt-Skript benötigt wird, in separate Dateien ausgelagert wird und nur die relevanten Funktionen und Klassen importiert werden, müssen wir die Struktur etwas umorganisieren. Ich werde dir zeigen, wie du die einzelnen Teile aufteilen und importieren kannst.
+
+Hier ist die angepasste Struktur:
+
+### 1. **Hauptskript (`script.js`)**
+Dies ist die Datei, die den Hauptcode enthält und in der die Kreaturen-Klassen und die Utility-Funktionen importiert werden.
+
+```javascript
+// Importiere die Kreaturen-Klassen aus dem "Lebewesen"-Unterordner
+import { Grass } from './Lebewesen/Grass.js';
+import { GrassEater } from './Lebewesen/GrassEater.js';
+import { MeatEater } from './Lebewesen/MeatEater.js';
+import { Empty } from './Lebewesen/Empty.js';
+
+// Importiere die Utility-Funktionen aus der utils.js Datei
+import { fillRandomMatrix, random, findNeighbourPositions, updateCreaturePosition } from './utils.js';
+
+// Größe der Matrix (Anzahl der Zellen in Breite und Höhe)
+let matrixSize = 50;
+
+// Anzeigengröße in Pixeln für jede Zelle
+let blockSize = 15;
+
+// Matrix zum Speichern der Kreaturen
+let matrix = [];
+
+// Wahrscheinlichkeit, mit der jede Kreatur erstellt wird
+let creatureProbabilities = [
+    [Grass, 0.25],    // Gras: 25% Wahrscheinlichkeit
+    [GrassEater, 0.05],  // Grasfresser: 5% Wahrscheinlichkeit
+    [MeatEater, 0.02],  // Fleischfresser: 2% Wahrscheinlichkeit
+];
+
+// Setup-Funktion wird einmal zu Beginn ausgeführt
+function setup() {
+    createCanvas(matrixSize * blockSize, matrixSize * blockSize); // Zeichenfläche erstellen
+    fillRandomMatrix(matrixSize, creatureProbabilities, matrix); // Matrix zufällig füllen
+    noStroke(); // Keine Umrandungen für Rechtecke
+    frameRate(30); // Bildrate auf 30 Frames pro Sekunde setzen
+}
+
+// Draw-Funktion wird in jedem Frame aufgerufen
+function draw() {
+    background(200); // Hintergrundfarbe festlegen
+    for (let row = 0; row < matrixSize; row++) {
+        for (let col = 0; col < matrixSize; col++) {
+            let obj = matrix[row][col]; // Objekt an der aktuellen Position
+
+            // Leere Zellen überspringen
+            if (obj instanceof Empty) continue;
+
+            // Zeile und Spalte der Kreatur setzen
+            obj.row = row;
+            obj.col = col;
+
+            // Verhindert, dass neu erstellte Kreaturen im gleichen Schritt aktualisiert werden
+            if (obj.stepCount === frameCount) {
+                obj.step(); // Kreatur führt ihren Schritt aus
+                obj.stepCount++; // Erhöhe den Step-Zähler
+            }
+
+            // Kreatur zeichnen
+            fill(obj.color); // Farbe der Kreatur setzen
+            rect(blockSize * obj.col, blockSize * obj.row, blockSize, blockSize); // Rechteck zeichnen
+        }
+    }
+}
+```
+
+### 2. **`LivingCreature.js` (Basisklasse für alle Kreaturen)**
+
+```javascript
+// LivingCreature.js - Basisklasse für alle Kreaturen
+export class LivingCreature { 
+    constructor(color, energy) {
+        this.stepCount = frameCount + 1; // Jede Kreatur braucht diese Zeile
+        this.color = color; // Jede Kreatur braucht eine Farbe
+        this.energy = energy; // Jede Kreatur braucht Energie
+    }
+
+    multiply(newCreatureClass, energyCost) {
+        let emptyFields = findNeighbourPositions(this.row, this.col, 1, Empty);
+        if (emptyFields.length > 0) {
+            let randomEmptyField = random(emptyFields);
+            let row = randomEmptyField[0];
+            let col = randomEmptyField[1]
+            matrix[row][col] = new newCreatureClass();
+            this.energy = energyCost;
+        }
+    }
+}
+```
+
+### 3. **`Grass.js` (Gras-Klasse)**
+
+```javascript
+// Grass.js - Gras-Klasse
+import { LivingCreature } from './LivingCreature.js';
+
+export class Grass extends LivingCreature {
+    constructor() {
+        super("green", int(random(2)));
+    }
+
+    step() {
+        this.energy++
+
+        if (this.energy >= 7) {
+            this.multiply();
+            this.energy = 0;
+        }
+    }
+
+    multiply() {
+        let emptyFields = findNeighbourPositions(this.row, this.col, 1, Empty);
+        if (emptyFields.length > 0) {
+            let randomEmptyField = random(emptyFields);
+            let row = randomEmptyField[0];
+            let col = randomEmptyField[1];
+            matrix[row][col] = new Grass();
+        }
+    }
+}
+```
+
+### 4. **`GrassEater.js` (Grasfresser-Klasse)**
+
+```javascript
+// GrassEater.js - Grasfresser-Klasse
+import { LivingCreature } from './LivingCreature.js';
+import { updateCreaturePosition, findNeighbourPositions, random } from '../utils.js';
+
+export class GrassEater extends LivingCreature {
+    constructor() {
+        super("yellow", 5);
+    }
+
+    step() {
+        this.trytoEat();
+        if (this.energy >= 10) {
+            this.multiply();
+            this.energy -= 7;
+        } else if (this.energy <= 0) {
+            matrix[this.row][this.col] = new Empty();
+        }
+    }
+
+    trytoEat() {
+        let grassFields = findNeighbourPositions(this.row, this.col, 1, Grass);
+        if (grassFields.length > 0) {
+            let randomGrassField = random(grassFields);
+            updateCreaturePosition(this, randomGrassField);
+            this.energy++;
+        } else {
+            let emptyFields = findNeighbourPositions(this.row, this.col, 1, Empty);
+            if (emptyFields.length > 0) {
+                let randomEmptyField = random(emptyFields);
+                updateCreaturePosition(this, randomEmptyField);
+            }
+            this.energy--;
+        }
+    }
+
+    multiply() {
+        let freeFields = findNeighbourPositions(this.row, this.col, 1, Empty);
+        if (freeFields.length > 0) {
+            let randomFreeField = random(freeFields);
+            let row = randomFreeField[0];
+            let col = randomFreeField[1];
+            matrix[row][col] = new GrassEater();
+        }
+    }
+}
+```
+
+### 5. **`MeatEater.js` (Fleischfresser-Klasse)**
+
+```javascript
+// MeatEater.js - Fleischfresser-Klasse
+import { LivingCreature } from './LivingCreature.js';
+import { updateCreaturePosition, findNeighbourPositions, random } from '../utils.js';
+
+export class MeatEater extends LivingCreature {
+    constructor() {
+        super("red", 100);
+    }
+
+    step() {
+        this.trytoEat();
+        if (this.energy >= 100) {
+            this.multiply();
+            this.energy -= 50;
+        } else if (this.energy <= 0) {
+            matrix[this.row][this.col] = new Empty();
+        }
+    }
+
+    trytoEat() {
+        let preyFields = findNeighbourPositions(this.row, this.col, 1, GrassEater);
+        if (preyFields.length > 0) {
+            let randomGrassField = random(preyFields);
+            updateCreaturePosition(this, randomGrassField);
+            this.energy += 15;
+        } else {
+            this.energy--;
+        }
+    }
+
+    multiply() {
+        let freeFields = findNeighbourPositions(this.row, this.col, 1, Empty);
+        if (freeFields.length > 0) {
+            let randomFreeField = random(freeFields);
+            let row = randomFreeField[0];
+            let col = randomFreeField[1];
+            matrix[row][col] = new MeatEater();
+        }
+    }
+}
+```
+
+### 6. **`Empty.js` (Leere Zelle)**
+
+```javascript
+// Empty.js - Leere Zelle
+export class Empty {
+    // Leere Zellen haben keine speziellen Eigenschaften
+}
+```
+
+### 7. **`utils.js` (Utility-Funktionen)**
+
+```javascript
+// utils.js - Utility-Funktionen
+export function random(array) {
+    return array[Math.floor(Math.random() * array.length)];
+}
+
+export function findNeighbourPositions(row, col, distance, creatureType) {
+    let positions = [];
+    for (let i = row - distance; i <= row + distance; i++) {
+        for (let j = col - distance; j <= col + distance; j++) {
+            let istInMatrix = i >= 0 && j >= 0 && i < matrixSize && j < matrixSize;
+
+            if (istInMatrix && (i != row || j != col) && matrix[i][j] instanceof creatureType) {
+                positions.push([i, j]);
+            }
+        }
+    }
+    return positions;
+}
+
+export function updateCreaturePosition(creature, newPos) {
+    if (matrix[creature.row][creature.col] !== creature) {
+        let creatureType = creature.constructor.name;
+        let message = `Ein ${creatureType}-Kreatur soll bewegt werden, aber befindet sich nicht mehr in der Matrix.`;
+        throw new Error(message);
+    }
+    let newRow = newPos[0];
+    let newCol = newPos[1];
+    matrix[newRow][newCol] = creature;
+    matrix[creature.row][creature.col] = new Empty();
+    creature.row = newRow;
+    creature.col = newCol;
+}
+
+export function fillRandomMatrix(matrixSize, creatureProbabilities, matrix) {
+    for (let i = 0; i < matrixSize; i++) {
+        matrix.push([]);
+        for (let j = 0; j < matrixSize; j++) {
+            matrix[i][j] = getRandomCreature(creatureProbabilities);
+        }
+    }
+}
+
+export function getRandomCreature(creatureProbabilities) {
+    let rand = Math.random();
+    let sum = 0;
+    for (let i = 0; i < creatureProbabilities.length; i++) {
+        let creatureClass = creatureProbabilities[i][0];
+        let probability = creatureProbabilities[i][1];
+        sum += probability;
+        if (rand < sum) {
+            return new creatureClass();
+        }
+    }
+    return new Empty();
+}
+```
+
+### Fazit:
+
+Jetzt haben wir den Code aufgeteilt und die **`LivingCreature`** und anderen Klassen sowie Utility-Funktionen ausgelagert. Das Hauptskript importiert alles, was es braucht. Auf diese Weise bleiben alle Funktionen modular und gut strukturiert.
