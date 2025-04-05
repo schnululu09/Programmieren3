@@ -2,7 +2,7 @@
 
 class Empty {
     constructor() {
-        // Keine spezifischen Eigenschaften nötig, da sie nur Platzhalter ist
+    
     }
 }
 

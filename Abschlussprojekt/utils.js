@@ -1,7 +1,6 @@
-
 import { Empty } from './Lebewesen/Empty.js';
 
-// utils.js - Utility-Funktionen, die von anderen Dateien importiert werden können
+// Utility-Funktionen, die von anderen Dateien importiert werden können
 
 // Zufallsgenerator für ein Element aus einem Array
 export function random(array) {

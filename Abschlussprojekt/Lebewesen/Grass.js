@@ -1,10 +1,9 @@
-// Grass.js
-import { LivingCreature } from './Lebewesen/LivingCreature.js';
-import { Emtpy } from './Lebewesen/Empty.js';
-
+import { LivingCreature } from './LivingCreature.js';
+import { Empty } from './Empty.js';
+import { random, findNeighbourPositions, updateCreaturePosition } from '../utils.js';
 class Grass extends LivingCreature {
     constructor() {
-        super("green", int(random(2))); // Setzt die Farbe auf grün und die Energie auf einen zufälligen Wert zwischen 0 und 2
+        super("green", Math.floor(Math.random() * 3)); // Setzt die Farbe auf grün und die Energie auf einen zufälligen Wert zwischen 0 und 2
     }
 
     step() {
@@ -21,7 +20,7 @@ class Grass extends LivingCreature {
         let emptyFields = findNeighbourPositions(this.row, this.col, 1, Empty);
 
         if (emptyFields.length > 0) {
-            let randomEmptyField = random(emptyFields);
+            let randomEmptyField = emptyFields[Math.floor(Math.random() * emptyFields.length)];
             let row = randomEmptyField[0];
             let col = randomEmptyField[1];
             matrix[row][col] = new Grass();
