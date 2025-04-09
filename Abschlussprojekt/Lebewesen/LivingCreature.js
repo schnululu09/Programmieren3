@@ -1,6 +1,10 @@
+import { matrix } from "../script.js";
+import { frameCount } from "../script.js";
+
+
 class LivingCreature {
     constructor(color, energy) {
-        this.stepCount = 0; // Die stepCount-Variable wird initialisiert, ohne auf `frameCount` von p5.js zuzugreifen
+        this.stepCount = frameCount + 1;
         this.color = color; // Jede Kreatur braucht eine Farbe
         this.energy = energy; // Jede Kreatur braucht Energie
     }

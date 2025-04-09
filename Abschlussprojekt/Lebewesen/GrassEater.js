@@ -3,6 +3,7 @@ import { Grass } from './Grass.js';
 import { Empty } from './Empty.js';
 import { findNeighbourPositions } from '../utils.js';
 import { matrix } from '../script.js';
+import { updateCreaturePosition } from '../utils.js';
 
 class GrassEater extends LivingCreature {
     constructor() {

@@ -14,9 +14,9 @@ export class MeatEater extends LivingCreature {
 
     step() {
         this.trytoEat();
-        if (this.energy >= 100) {
+        if (this.energy >= 120) {
             this.multiply();
-            this.energy -= 50;
+            this.energy -= 100;
         } else if (this.energy <= 0) {
             matrix[this.row][this.col] = new Empty();
         }
@@ -27,7 +27,7 @@ export class MeatEater extends LivingCreature {
         if (preyFields.length > 0) {
             let randomGrassField = random(preyFields);
             updateCreaturePosition(this, randomGrassField);
-            this.energy += 15;
+            this.energy += 10;
         } else {
             this.energy--;
         }

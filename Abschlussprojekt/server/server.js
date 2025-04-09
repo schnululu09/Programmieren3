@@ -1,10 +1,38 @@
 // import von der setup und draw Funktion und der matrix Variable
 import { createAndFillMatrix, getTransformedMatrix } from '../matrix.js';
-import { setup, draw } from '../script.js';
+import { setup, draw, matrix } from '../script.js';
 import express from 'express';
 import { Server } from 'socket.io';
 import http from 'http';
+import bodyParser from 'body-parser';
+import fs from 'fs';
 
+app.use(bodyParser.json());
+
+// Route zum Speichern der Statistik
+app.post('./statistik', (req, res) => {
+    const statistik = req.body;
+
+    // Statistik in eine JSON-Datei speichern
+    fs.readFile('statistiken.json', 'utf8', (err, data) => {
+        let statistikArray = [];
+
+        if (!err && data) {
+            statistikArray = JSON.parse(data); // Bereits gespeicherte Daten
+        }
+
+        // Füge die neue Statistik hinzu
+        statistikArray.push(statistik);
+
+        // Speichere die aktualisierte Statistik zurück in die Datei
+        fs.writeFile('statistiken.json', JSON.stringify(statistikArray, null, 4), (err) => {
+            if (err) {
+                return res.status(500).json({ message: 'Fehler beim Speichern der Statistik' });
+            }
+            res.status(200).json({ message: 'Statistik gespeichert' });
+        });
+    });
+});
 
 const app = express();
 const server = http.createServer(app);
@@ -13,6 +41,7 @@ const io = new Server(server);
 // wir speichern das Ergebnis von der setInterval Funktion in einer Variable,
 // damit wir es später stoppen können
 let intertval;
+
 
 // wir sagen Express, dass die Dateien im Ordner client statisch sind
 // das bedeutet, dass sie direkt an der Browser geschickt werden können
@@ -42,6 +71,9 @@ io.on('connection', (socket) => {
     
 
     setup();
+    
+    let oldmatrix = JSON.parse(JSON.stringify(matrix))
+    
     intertval = setInterval(() => {
         draw();
         socket.emit('matrix', getTransformedMatrix());

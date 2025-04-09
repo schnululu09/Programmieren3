@@ -1,4 +1,5 @@
 import { Empty } from './Lebewesen/Empty.js';
+import { matrix, matrixSize } from './script.js';
 
 // Utility-Funktionen, die von anderen Dateien importiert werden können
 
@@ -9,7 +10,7 @@ export function random(array) {
 
 // Sucht die benachbarten Positionen eines bestimmten Kreaturentypen
 // Gibt eine Liste von [row, col]-Positionen zurück
-export function findNeighbourPositions(row, col, distance, creatureType, matrixSize, matrix) {
+export function findNeighbourPositions(row, col, distance, creatureType) {
     let positions = [];
     for (let i = row - distance; i <= row + distance; i++) {
         for (let j = col - distance; j <= col + distance; j++) {
@@ -24,7 +25,7 @@ export function findNeighbourPositions(row, col, distance, creatureType, matrixS
 }
 
 // Aktualisiert die Position einer Kreatur in der Matrix
-export function updateCreaturePosition(creature, newPos, matrix) {
+export function updateCreaturePosition(creature, newPos) {
     if (matrix[creature.row][creature.col] !== creature) {
         let creatureType = creature.constructor.name;
         let message = `Ein ${creatureType}-Kreatur soll bewegt werden, aber befindet sich nicht mehr in der Matrix.`;
@@ -54,7 +55,8 @@ export function getRandomCreature(creatureProbabilities) {
 }
 
 // Funktion zum zufälligen Auffüllen der Matrix mit Kreaturen
-export function fillRandomMatrix(matrixSize, creatureProbabilities, matrix) {
+export function fillRandomMatrix(matrixSize, creatureProbabilities) {
+    matrix.splice(0, matrix.length)
     for (let i = 0; i < matrixSize; i++) {
         matrix.push([]);
         for (let j = 0; j < matrixSize; j++) {
