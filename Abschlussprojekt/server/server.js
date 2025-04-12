@@ -1,38 +1,13 @@
 // import von der setup und draw Funktion und der matrix Variable
 import { createAndFillMatrix, getTransformedMatrix } from '../matrix.js';
-import { setup, draw, matrix } from '../script.js';
+import { setup, draw, matrix, spielStatistiken } from '../script.js';
 import express from 'express';
 import { Server } from 'socket.io';
 import http from 'http';
 import bodyParser from 'body-parser';
 import fs from 'fs';
+import { spawnGrassEater, zündeBombe, spawnMeatEater, spawnGrass} from '../Lebewesen/Events.js';
 
-app.use(bodyParser.json());
-
-// Route zum Speichern der Statistik
-app.post('./statistik', (req, res) => {
-    const statistik = req.body;
-
-    // Statistik in eine JSON-Datei speichern
-    fs.readFile('statistiken.json', 'utf8', (err, data) => {
-        let statistikArray = [];
-
-        if (!err && data) {
-            statistikArray = JSON.parse(data); // Bereits gespeicherte Daten
-        }
-
-        // Füge die neue Statistik hinzu
-        statistikArray.push(statistik);
-
-        // Speichere die aktualisierte Statistik zurück in die Datei
-        fs.writeFile('statistiken.json', JSON.stringify(statistikArray, null, 4), (err) => {
-            if (err) {
-                return res.status(500).json({ message: 'Fehler beim Speichern der Statistik' });
-            }
-            res.status(200).json({ message: 'Statistik gespeichert' });
-        });
-    });
-});
 
 const app = express();
 const server = http.createServer(app);
@@ -53,6 +28,10 @@ app.get('/', (req, res) => {
     res.redirect('/index.html');
 });
 
+
+
+
+
 // wir starten den Server auf dem Port 3000
 server.listen(3000, () => {
     console.log('Server is running on http://localhost:3000');
@@ -70,6 +49,31 @@ io.on('connection', (socket) => {
 
     
 
+    socket.on('event', (eventName) => {
+        if (eventName == "Bombe") {
+          zündeBombe(); 
+          spielStatistiken.Events_gezündet++;
+        }
+        if (eventName == "SpawnGrassEater") {
+            spawnGrassEater();
+            spielStatistiken.Events_gezündet++;
+
+        }
+        if (eventName == "SpawnMeatEater") {
+            spawnMeatEater();
+            spielStatistiken.Events_gezündet++;
+
+        }
+        if (eventName == "SpawnGrass") {
+            spawnGrass();
+            spielStatistiken.Gewachsenes_Gras++;
+
+        }
+    });
+
+ 
+    
+
     setup();
     
     let oldmatrix = JSON.parse(JSON.stringify(matrix))
@@ -77,6 +81,7 @@ io.on('connection', (socket) => {
     intertval = setInterval(() => {
         draw();
         socket.emit('matrix', getTransformedMatrix());
+        socket.emit("statistik", JSON.stringify(spielStatistiken))
     }, 30);
 });
 

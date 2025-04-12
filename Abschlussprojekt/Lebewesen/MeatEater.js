@@ -3,7 +3,7 @@ import { LivingCreature } from './LivingCreature.js';
 import { Grass } from './Grass.js';
 import { GrassEater } from './GrassEater.js';
 import { Empty } from './Empty.js';
-import { matrix } from '../script.js';
+import { matrix, spielStatistiken } from '../script.js';
 
 import { updateCreaturePosition, findNeighbourPositions, random } from '../utils.js';
 
@@ -28,6 +28,7 @@ export class MeatEater extends LivingCreature {
             let randomGrassField = random(preyFields);
             updateCreaturePosition(this, randomGrassField);
             this.energy += 10;
+            spielStatistiken.Getötete_Grass_Eater++;
         } else {
             this.energy--;
         }

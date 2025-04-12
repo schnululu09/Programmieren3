@@ -2,7 +2,7 @@ import { LivingCreature } from './LivingCreature.js';
 import { Empty } from './Empty.js';
 import { random, findNeighbourPositions, updateCreaturePosition } from '../utils.js';
 import { matrix } from '../script.js';
-
+import { spielStatistiken } from '../script.js';
 class Grass extends LivingCreature {
     constructor() {
         super("green", Math.floor(Math.random() * 3)); // Setzt die Farbe auf grün und die Energie auf einen zufälligen Wert zwischen 0 und 2
@@ -25,8 +25,11 @@ class Grass extends LivingCreature {
             let row = randomEmptyField[0];
             let col = randomEmptyField[1];
             matrix[row][col] = new Grass();
+            spielStatistiken.Gewachsenes_Gras++; 
         }
     }
 }
+
+
 
 export { Grass };

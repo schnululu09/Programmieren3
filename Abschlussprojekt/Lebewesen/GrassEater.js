@@ -4,6 +4,7 @@ import { Empty } from './Empty.js';
 import { findNeighbourPositions } from '../utils.js';
 import { matrix } from '../script.js';
 import { updateCreaturePosition } from '../utils.js';
+import { spielStatistiken } from '../script.js';
 
 class GrassEater extends LivingCreature {
     constructor() {
@@ -27,6 +28,7 @@ class GrassEater extends LivingCreature {
             let randomGrassField = grassFields[Math.floor(Math.random() * grassFields.length)];
             updateCreaturePosition(this, randomGrassField); // Bewege den Grasfresser auf das Gras
             this.energy++; // Grasfresser gewinnt Energie
+            spielStatistiken.Gegessenes_Gras++; 
         } else {
             let emptyFields = findNeighbourPositions(this.row, this.col, 1, Empty);
             if (emptyFields.length > 0) {
